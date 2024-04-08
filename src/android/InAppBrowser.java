@@ -223,7 +223,14 @@ public class InAppBrowser extends CordovaPlugin {
                         // load in webview
                         if (Boolean.TRUE.equals(shouldAllowNavigation)) {
                             LOG.d(LOG_TAG, "loading in webview");
-                            webView.loadUrl(url);
+
+                            String AuthorizationSet = features.get(AUTHORIZATION);
+                            if (AuthorizationSet) {
+                              webView.loadUrl(url, extraHeader); //Denny
+                            } else {
+                              webView.loadUrl(url);
+                            }
+
                         }
                         //Load the dialer
                         else if (url.startsWith(WebView.SCHEME_TEL))
@@ -278,7 +285,14 @@ public class InAppBrowser extends CordovaPlugin {
                     } else {
                         ((InAppBrowserClient)inAppWebView.getWebViewClient()).waitForBeforeload = false;
                     }
-                    inAppWebView.loadUrl(url);
+
+                    //inAppWebView.loadUrl(url);
+                    String AuthorizationSet = features.get(AUTHORIZATION);
+                    if (AuthorizationSet) {
+                      inAppWebView.loadUrl(url, extraHeader); //Denny
+                    } else {
+                      inAppWebView.loadUrl(url);
+                    }
                 }
             });
         }
@@ -604,10 +618,17 @@ public class InAppBrowser extends CordovaPlugin {
         InputMethodManager imm = (InputMethodManager)this.cordova.getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(edittext.getWindowToken(), 0);
 
+        String navUrl = url;
+
         if (!url.startsWith("http") && !url.startsWith("file:")) {
-            this.inAppWebView.loadUrl("http://" + url);
+            navUrl = "http://" + url;
+        }
+
+        String AuthorizationSet = features.get(AUTHORIZATION);
+        if (AuthorizationSet) {
+          this.inAppWebView.loadUrl(navUrl, extraHeader); //Denny
         } else {
-            this.inAppWebView.loadUrl(url);
+          this.inAppWebView.loadUrl(navUrl);
         }
         this.inAppWebView.requestFocus();
     }
