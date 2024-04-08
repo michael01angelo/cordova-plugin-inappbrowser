@@ -118,9 +118,9 @@ public class InAppBrowser extends CordovaPlugin {
     private static final String FOOTER_COLOR = "footercolor";
     private static final String BEFORELOAD = "beforeload";
     private static final String FULLSCREEN = "fullscreen";
+    private static final String AUTHORIZATION = "Authorization"; //Denny
 
     private static final int TOOLBAR_HEIGHT = 48;
-
     private static final List customizableOptions = Arrays.asList(CLOSE_BUTTON_CAPTION, TOOLBAR_COLOR, NAVIGATION_COLOR, CLOSE_BUTTON_COLOR, FOOTER_COLOR);
 
     private InAppBrowserDialog dialog;
@@ -152,6 +152,8 @@ public class InAppBrowser extends CordovaPlugin {
     private String[] allowedSchemes;
     private InAppBrowserClient currentClient;
 
+    java.util.Map<String,String> extraHeader = new HashMap<String, String>(); //Denny
+
     /**
      * Executes the request and returns PluginResult.
      *
@@ -171,7 +173,10 @@ public class InAppBrowser extends CordovaPlugin {
             final String target = t;
             final HashMap<String, String> features = parseFeature(args.optString(2));
 
-            LOG.d(LOG_TAG, "target = " + target);
+            LOG.d(LOG_TAG, "!!target = " + target);
+            LOG.d(LOG_TAG, "!! args 2 = " + args.optString(2));
+            LOG.d(LOG_TAG, "!! hashmap = " + features);
+
 
             this.cordova.getActivity().runOnUiThread(new Runnable() {
                 @Override
@@ -245,7 +250,7 @@ public class InAppBrowser extends CordovaPlugin {
                     }
                     // BLANK - or anything else
                     else {
-                        LOG.d(LOG_TAG, "in blank");
+                        LOG.d(LOG_TAG, "in blank!!!");
                         result = showWebPage(url, features);
                     }
 
@@ -274,7 +279,6 @@ public class InAppBrowser extends CordovaPlugin {
                         ((InAppBrowserClient)inAppWebView.getWebViewClient()).waitForBeforeload = false;
                     }
                     inAppWebView.loadUrl(url);
-
                 }
             });
         }
@@ -439,7 +443,7 @@ public class InAppBrowser extends CordovaPlugin {
                 if (option.hasMoreElements()) {
                     String key = option.nextToken();
                     String value = option.nextToken();
-                    if (!customizableOptions.contains(key)) {
+                    if (!key.equals("Authorization") && !customizableOptions.contains(key)) { //Denny
                         value = value.equals("yes") || value.equals("no") ? value : "yes";
                     }
                     map.put(key, value);
@@ -715,6 +719,20 @@ public class InAppBrowser extends CordovaPlugin {
             if (fullscreenSet != null) {
                 fullscreen = fullscreenSet.equals("yes") ? true : false;
             }
+
+            //Denny
+            LOG.d(LOG_TAG, "AuthorizationSet!!!");
+
+            String AuthorizationSet = features.get(AUTHORIZATION);
+            LOG.d(LOG_TAG, AuthorizationSet);
+
+
+            if (AuthorizationSet != null) {
+                //Authorization = AuthorizationSet;
+                extraHeader.put("Authorization", AuthorizationSet);
+                LOG.d(LOG_TAG, AuthorizationSet);
+            }
+            //Denny
         }
 
         final CordovaWebView thatWebView = this.webView;
@@ -916,6 +934,7 @@ public class InAppBrowser extends CordovaPlugin {
                 View footerClose = createCloseButton(7);
                 footer.addView(footerClose);
 
+
                 // WebView
                 inAppWebView = new WebView(cordova.getActivity());
                 inAppWebView.setLayoutParams(new LinearLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
@@ -948,9 +967,9 @@ public class InAppBrowser extends CordovaPlugin {
                 settings.setJavaScriptCanOpenWindowsAutomatically(true);
                 settings.setBuiltInZoomControls(showZoomControls);
                 settings.setPluginState(android.webkit.WebSettings.PluginState.ON);
-                
+
                 // download event
-                
+
                 inAppWebView.setDownloadListener(
                     new DownloadListener(){
                         public void onDownloadStart(
@@ -971,7 +990,7 @@ public class InAppBrowser extends CordovaPlugin {
                             }
                         }
                     }
-                );        
+                );
 
                 // Add postMessage interface
                 class JsObject {
@@ -998,7 +1017,7 @@ public class InAppBrowser extends CordovaPlugin {
                     settings.setUserAgentString(overrideUserAgent);
                 }
                 if (appendUserAgent != null) {
-                    settings.setUserAgentString(settings.getUserAgentString() + " " + appendUserAgent);
+                    settings.setUserAgentString(settings.getUserAgentString() + appendUserAgent);
                 }
 
                 //Toggle whether this is enabled or not!
@@ -1020,7 +1039,8 @@ public class InAppBrowser extends CordovaPlugin {
                 // Enable Thirdparty Cookies
                 CookieManager.getInstance().setAcceptThirdPartyCookies(inAppWebView,true);
 
-                inAppWebView.loadUrl(url);
+                //inAppWebView.loadUrl(url);
+                inAppWebView.loadUrl(url, extraHeader); //Denny
                 inAppWebView.setId(Integer.valueOf(6));
                 inAppWebView.getSettings().setLoadWithOverviewMode(true);
                 inAppWebView.getSettings().setUseWideViewPort(useWideViewPort);
